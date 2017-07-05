@@ -1,0 +1,11 @@
+{  
+    "ref_fasta":"/rhome/cjinfeng/BigData/00.RD/CNVRepeat/example/MSU_r7.fa",
+    "gtf":"/rhome/cjinfeng/BigData/00.RD/CNVRepeat/example/MSU7.gene.gtf",
+    "bam":"/rhome/cjinfeng/BigData/00.RD/CNVRepeat/example/HEG4_2.3.MSU7_BWA.bam",
+    "repeat":"/rhome/cjinfeng/BigData/00.RD/CNVRepeat/example/mping.fa",
+    "output":"/rhome/cjinfeng/BigData/00.RD/CNVRepeat/example/CNVRepeat_output",
+    "binaries": {
+        "bowtie2": "/opt/linux/centos/7.x/x86_64/pkgs/bowtie2/2.2.9/bin/bowtie2",
+        "samtools": "/opt/linux/centos/7.x/x86_64/pkgs/samtools/1.4.1/bin/samtools"
+    }
+}

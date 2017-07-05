@@ -1,0 +1,6 @@
+h5py==2.6.0
+ipython-cluster-helper==0.5.4
+networkx==1.11
+numpy==1.11.2
+pysam==0.10.0
+scipy==0.19.0
