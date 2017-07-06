@@ -1,9 +1,19 @@
 import collections
+import errno
 import os
 import re
 import string 
 import sys
 
+class BinaryNotFoundError(Exception):
+    pass
+
+def ensure_dir(directory):
+    try:
+        os.makedirs(directory)
+    except OSError as err:
+        if err.errno != errno.EEXIST:
+            raise
 
 class cd: 
   def __init__(self, newPath):

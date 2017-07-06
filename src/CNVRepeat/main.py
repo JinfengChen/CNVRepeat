@@ -1,3 +1,4 @@
+#the package use modules from grocsvs (https://github.com/grocsvs/grocsvs) as basis for designing the pipeline.
 from __future__ import print_function
 
 import argparse
@@ -8,7 +9,8 @@ import sys
 
 from CNVRepeat import log
 from CNVRepeat import options as opts
-
+from CNVRepeat import pipeline
+from CNVRepeat import analysis
 
 def load_config(config_path):
     try:
@@ -21,14 +23,20 @@ def load_config(config_path):
     return options
 
 def run(options):
-    #stages = get_stages()
-    #runner = pipeline.Runner(options)
+    analysis_steps = prepare_analysis(options)
+    runner = pipeline.Runner(options)
 
-    #for stage_name, stage in stages.items():
-    #    print ('Running state: "{}"'.format(stage_name))
-    #    runner.run_stage(stage, stage_name)
-    
+    print("Running")
+    for analysis_name, analysis_step in analysis_steps.items():
+        print ('Running analysis: "{}"'.format(analysis_name))
+        runner.run_stage(analysis_step, analysis_name)
 
+def prepare_analysis(options):
+    analysis_steps = collections.OrderedDict()
+    if not os.path.exists(options.bed):
+        analysis_steps["Single Copy Exon"] = analysis.single_copy_exon.SingleCopyExonStep
+
+    return analysis_steps
 
 def main():
     parser = argparse.ArgumentParser(description="CNVRepeat: estimate copy number of repeat sequence in the genome")
