@@ -20,6 +20,6 @@ setup(
         'console_scripts' : ["CNVRepeat = CNVRepeat.main:main"]
     },
 
-    install_requires = ["h5py", "networkx", "pysam>=0.10.0", "scipy", "ipython-cluster-helper"],
+    install_requires = ["h5py", "networkx", "pysam>=0.10.0", "scipy", "traitlets", "ipython-cluster-helper", "pyfaidx", "pandas"],
 
 )

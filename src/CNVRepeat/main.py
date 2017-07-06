@@ -6,6 +6,7 @@ import collections
 import json
 import logging
 import sys
+import os
 
 from CNVRepeat import log
 from CNVRepeat import options as opts
@@ -26,6 +27,9 @@ def run(options):
     analysis_steps = prepare_analysis(options)
     runner = pipeline.Runner(options)
 
+    #for chrom in options.reference.chroms:
+    #    print('chromosome: {}'.format(chrom))
+
     print("Running")
     for analysis_name, analysis_step in analysis_steps.items():
         print ('Running analysis: "{}"'.format(analysis_name))
@@ -35,6 +39,7 @@ def prepare_analysis(options):
     analysis_steps = collections.OrderedDict()
     if not os.path.exists(options.bed):
         analysis_steps["Single Copy Exon"] = analysis.single_copy_exon.SingleCopyExonStep
+    analysis_steps["Genome Coverage Estimator"] = analysis.estimate_genome_coverage_bed.EstimateGenomeCoverageStep
 
     return analysis_steps
 

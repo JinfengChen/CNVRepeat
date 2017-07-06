@@ -4,6 +4,7 @@ import os
 import sys
 
 from CNVRepeat import utilities
+from CNVRepeat.reference import Reference
 from CNVRepeat.utilities import get_key
 
 
@@ -40,6 +41,7 @@ class Options(object):
 
         self.ref_fasta = None
         self.gtf       = None
+        self.bed       = None
         self.bam       = None
         self.repeat    = None
         self.binaries  = {}
@@ -56,6 +58,7 @@ class Options(object):
 
         d = {"ref_fasta": self.ref_fasta,
              "gtf": self.gtf,
+             "bed": self.bed,
              "bam": self.bam,
              "repeat": self.repeat,
              "output": self.output,
@@ -70,6 +73,7 @@ class Options(object):
         options = Options(options_path)
         options.ref_fasta = get_key(options_dict, "ref_fasta")
         options.gtf       = get_key(options_dict, "gtf")
+        options.bed       = get_key(options_dict, "bed")
         options.bam       = get_key(options_dict, "bam")
         options.repeat    = get_key(options_dict, "repeat") 
         options.binaries  = get_key(options_dict, "binaries", dict, default={})
@@ -99,3 +103,47 @@ class Options(object):
     def log_dir(self):
         return os.path.join(self.output_dir, "logs")
 
+    @property
+    def reference(self):
+        if self._reference is None:
+            self._reference = Reference(self.ref_fasta, self.debug)
+        return self._reference
+
+    def binary(self, name):
+        """
+        Checks to see if a path has been specified for an external binary,
+        otherwise just return the name of the binary to try running it
+        if it's in $PATH
+        """
+        
+        bin_path = self.binaries.get(name, name)
+        if utilities.which(bin_path) is None:
+            raise utilities.BinaryNotFoundError(
+                "Failed to locate binary '{}'; please make sure it is in ".format(name) + 
+                "your $PATH or add it to the configuration.json file")
+        return bin_path
+
+
+    @property
+    def debug(self):
+        return self._debug
+    
+    @debug.setter
+    def debug(self, mode=True):
+        self._reference = None
+        self._debug = mode
+
+    def __str__(self):
+        d = self.serialize()
+        d["debug"] = self.debug
+        return json.dumps(d, sort_keys=True, indent=4)
+
+    def __getstate__(self):
+        """
+        allows pickling of Options instances, necessary for ipyparallel
+        """
+        state = self.__dict__.copy()
+        state["_reference"] = None
+        state["_constants"] = None
+
+        return state    

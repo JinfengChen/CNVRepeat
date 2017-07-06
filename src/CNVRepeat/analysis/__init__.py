@@ -1,1 +1,2 @@
 from CNVRepeat.analysis import single_copy_exon
+from CNVRepeat.analysis import estimate_genome_coverage_bed
