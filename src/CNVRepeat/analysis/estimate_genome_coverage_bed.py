@@ -3,6 +3,7 @@ import os
 import re
 import sys
 import subprocess
+import pandas
 from collections import defaultdict
 
 from CNVRepeat import step 
@@ -18,10 +19,6 @@ class EstimateGenomeCoverageStep(step.StepChunk):
         for chrom in options.reference.chroms:
             for chunk in range(chunks_for_chrom(options, chrom)):
                 yield EstimateGenomeCoverageStep(options, chrom, chunk)
-        #for chrom in ["chr1", "chr2"]:
-        #    for chunk in range(chunks_for_chrom(options, chrom)):
-            #for chunk in range(1):
-        #        yield EstimateGenomeCoverageStep(options, chrom, chunk)
 
     def __init__(self, options, chrom, chunk):
         self.options = options
@@ -72,3 +69,51 @@ class EstimateGenomeCoverageStep(step.StepChunk):
             if cmd_error != 0:
                 self.logger.log("genome coverage error code: {}\n{}".format(command, cmd_error))
 
+
+class CombineGenomeCoverageStep(step.StepChunk):
+    @staticmethod
+    def get_steps(options):
+        yield CombineGenomeCoverageStep(options)
+    
+    def __init__(self, options):
+        self.options = options
+
+    def __str__(self):
+        return ".".join([self.__class__.__name__])
+
+    def outpaths(self, final):
+        directory = self.results_dir if final \
+                    else self.working_dir
+
+        genomecov_name = "genomecov.bedgraph"
+
+        paths = {
+            "genomecov": os.path.join(directory, genomecov_name)
+        }
+
+        return paths
+
+    def run(self):
+        outpaths = self.outpaths(final=False)
+        self.logger.log("Merging genome coverage ...")
+   
+        genomecov_bedgraph = []
+        ofile = open(outpaths["genomecov"], 'w')
+        for i, inpath in enumerate(self.get_input_paths()):
+            try:
+                header = ['chrom','start','end','strand','bedcov','genomecov'] 
+                genomecov_bedgraph_temp = pandas.read_csv(inpath, sep="\t", header=None, names=header)
+                genomecov_bedgraph_temp['genomecov'] = genomecov_bedgraph_temp['bedcov']/(genomecov_bedgraph_temp['end']-genomecov_bedgraph_temp['start']+1)
+                genomecov_bedgraph_temp.to_csv(ofile, sep="\t", columns=header, header=header, index=False)
+            except pandas.io.common.EmptyDataError:
+                self.logger.log("No genome coverage found in {}; skipping".format(inpath))
+        ofile.close() 
+
+    def get_input_paths(self):
+        paths = []
+        for chrom in self.options.reference.chroms:
+            for chunk in range(chunks_for_chrom(self.options, chrom)):
+                input_step = EstimateGenomeCoverageStep(self.options, chrom, chunk)
+                paths.append(input_step.outpaths(final=True)["genomebedgraph"])
+
+        return paths 
