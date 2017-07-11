@@ -5,6 +5,7 @@ import subprocess
 from collections import defaultdict
 
 from CNVRepeat import step 
+from CNVRepeat.reference import Reference
 
 class EstimateRepeatCoverageStep(step.StepChunk):
    
@@ -22,8 +23,8 @@ class EstimateRepeatCoverageStep(step.StepChunk):
         directory = self.results_dir if final \
                     else self.working_dir
         paths = {
-            "bwa_bam" : os.path.join(directory, '{}.bwa_sorted.bam'.format(os.path.splitext(os.path.split(self.options.gtf)[1])[0])),
-            "repeat_depth_out" : os.path.join(directory, '{}.bwa_sorted.depth'.format(os.path.splitext(os.path.split(self.options.gtf)[1])[0]))
+            "bwa_bam" : os.path.join(directory, '{}.bwa_sorted.bam'.format(os.path.splitext(os.path.split(self.options.ref_fasta)[1])[0])),
+            "repeat_depth_out" : os.path.join(directory, '{}.bwa_sorted.depth'.format(os.path.splitext(os.path.split(self.options.ref_fasta)[1])[0]))
         }
 
         return paths
@@ -34,16 +35,57 @@ class EstimateRepeatCoverageStep(step.StepChunk):
         self.run_map2repeat_bwa(self.bwa_bam, self.repeat_depth_out)
 
     def run_map2repeat_bwa(self, bwa_bam, repeat_depth_out):
-        commands = []
+        bwa_sam         = '{}.sam'.format(os.path.splitext(bwa_bam)[0])
+        bwa_filter_sam  = '{}.filter.sam'.format(os.path.splitext(bwa_bam)[0])
         if not os.path.exists('{}.bwt'.format(self.options.repeat)):
-            commands.append('{} index {}'.format(self.options.binaries['bwa'], self.options.repeat))
-        if not os.path.exists(bwa_bam):
-            commands.append('{} mem -t {} -O2,2 -a -Y -k 15 -T 10 {} {} {} | {} view -Shb -F 4 - | {} sort - -o {}'.format(self.options.binaries['bwa'], self.options.cluster_settings.processes, self.options.repeat, self.options.fastq1, self.options.fastq2, self.options.binaries['samtools'], self.options.binaries['samtools'], bwa_bam))
-        commands.append('{} depth -Q 30 {} > {}'.format(self.options.binaries['samtools'], bwa_bam, repeat_depth_out))
-        for command in commands:
-            print(command)
+            command = '{} index {}'.format(self.options.binaries['bwa'], self.options.repeat)
             cmd = subprocess.Popen(command, shell=True, stderr=subprocess.PIPE)
             cmd_error = cmd.wait()
             if cmd_error != 0:
-                self.logger.log("bwa mapping error code: {}\n{}".format(command, cmd_error)) 
+                self.logger.log("bwa index error code: {}\n{}".format(command, cmd_error))
+            
+        if not os.path.exists(bwa_bam):
+            command = '{} mem -t {} -O2,2 -a -Y -k 15 -T 10 {} {} {} > {}'.format(self.options.binaries['bwa'], self.options.cluster_settings.processes, self.options.repeat, self.options.fastq1, self.options.fastq2, bwa_sam)
+            cmd = subprocess.Popen(command, shell=True, stderr=subprocess.PIPE)
+            cmd_error = cmd.wait()
+            if cmd_error != 0:
+                self.logger.log("bwa mapping error code: {}\n{}".format(command, cmd_error))
+            
+            self.parse_sam(bwa_sam, bwa_filter_sam)
+            
+            command = '{} view -Shb -F 4 {} | {} sort - -o {}'.format(self.options.binaries['samtools'], bwa_filter_sam, self.options.binaries['samtools'], bwa_bam)
+            cmd = subprocess.Popen(command, shell=True, stderr=subprocess.PIPE)
+            cmd_error = cmd.wait()
+            if cmd_error != 0:
+                self.logger.log("bam sorting error code: {}\n{}".format(command, cmd_error))
+
+        command = '{} depth -Q 30 {} > {}'.format(self.options.binaries['samtools'], bwa_bam, repeat_depth_out)
+        cmd = subprocess.Popen(command, shell=True, stderr=subprocess.PIPE)
+        cmd_error = cmd.wait()
+        if cmd_error != 0:
+            self.logger.log("samtools depth error code: {}\n{}".format(command, cmd_error)) 
+
+    def parse_sam(self, sam, filter_sam):
+        repeat_seq = Reference(self.options.repeat) 
+        ofile = open(filter_sam, 'w')
+        right_clip  = re.compile(r'^(\d+)M\d+S$')
+        left_clip   = re.compile(r'^\d+S\d+M$')
+        perfect     = re.compile(r'^\d+M$')
+        with open (sam, 'r') as filehd:
+            for line in filehd:
+                line = line.rstrip()
+                if line.startswith(r'@'):
+                    print >> ofile, line
+                else:
+                    unit = re.split(r'\t',line)
+                    if perfect.search(unit[5]):
+                        print >> ofile, line
+                    elif left_clip.search(unit[5]) and int(unit[3]) < 10:
+                        print >> ofile, line
+                    elif right_clip.search(unit[5]):
+                        match_len  = right_clip.search(unit[5]).groups(0)[0]
+                        repeat_len = len(repeat_seq.fasta[unit[2]])
+                        if int(unit[3]) + int(match_len) >= repeat_len - 10:
+                            print >> ofile, line
+        ofile.close()
 

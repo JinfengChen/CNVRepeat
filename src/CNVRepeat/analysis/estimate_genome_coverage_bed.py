@@ -99,12 +99,13 @@ class CombineGenomeCoverageStep(step.StepChunk):
    
         genomecov_bedgraph = []
         ofile = open(outpaths["genomecov"], 'w')
+        header = ['chrom','start','end','strand','bedcov','genomecov']
+        print >> ofile, '\t'.join(header)
         for i, inpath in enumerate(self.get_input_paths()):
             try:
-                header = ['chrom','start','end','strand','bedcov','genomecov'] 
                 genomecov_bedgraph_temp = pandas.read_csv(inpath, sep="\t", header=None, names=header)
                 genomecov_bedgraph_temp['genomecov'] = genomecov_bedgraph_temp['bedcov']/(genomecov_bedgraph_temp['end']-genomecov_bedgraph_temp['start']+1)
-                genomecov_bedgraph_temp.to_csv(ofile, sep="\t", columns=header, header=header, index=False)
+                genomecov_bedgraph_temp.to_csv(ofile, sep="\t", columns=header, header=False, index=False)
             except pandas.io.common.EmptyDataError:
                 self.logger.log("No genome coverage found in {}; skipping".format(inpath))
         ofile.close() 

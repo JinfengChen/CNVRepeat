@@ -27,7 +27,7 @@ class EstimateRepeatCopyNumberStep(step.StepChunk):
         directory = self.results_dir if final \
                     else self.working_dir
         paths = {
-            "repeat_cnv" : os.path.join(directory, '{}.repeat_cnv.csv'.format(os.path.splitext(os.path.split(self.options.gtf)[1])[0])),
+            "repeat_cnv" : os.path.join(directory, '{}.repeat_cnv.csv'.format(os.path.splitext(os.path.split(self.options.ref_fasta)[1])[0])),
         }
 
         return paths
