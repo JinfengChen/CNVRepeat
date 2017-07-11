@@ -38,6 +38,8 @@ def prepare_analysis(options):
         analysis_steps["Single Copy Exon"]      = analysis.single_copy_exon.SingleCopyExonStep
     analysis_steps["Genome Coverage Estimator"] = analysis.estimate_genome_coverage_bed.EstimateGenomeCoverageStep
     analysis_steps["Genome Coverage Merger"]    = analysis.estimate_genome_coverage_bed.CombineGenomeCoverageStep
+    analysis_steps["Repaet Coverage Estimator"] = analysis.estimate_repeat_coverage.EstimateRepeatCoverageStep
+    analysis_steps["Repeat Copy Number"]        = analysis.estimate_repeat_copy_number.EstimateRepeatCopyNumberStep
 
     return analysis_steps
 

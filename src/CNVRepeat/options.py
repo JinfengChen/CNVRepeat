@@ -43,6 +43,8 @@ class Options(object):
         self.gtf       = None
         self.bed       = None
         self.bam       = None
+        self.fastq1    = None
+        self.fastq2    = None
         self.repeat    = None
         self.binaries  = {}
         self._reference = None
@@ -60,6 +62,8 @@ class Options(object):
              "gtf": self.gtf,
              "bed": self.bed,
              "bam": self.bam,
+             "fastq1": self.fastq1,
+             "fastq2": self.fastq2,
              "repeat": self.repeat,
              "output": self.output,
              "cluster_settings": self.cluster_settings.serialize(),
@@ -75,6 +79,8 @@ class Options(object):
         options.gtf       = get_key(options_dict, "gtf")
         options.bed       = get_key(options_dict, "bed")
         options.bam       = get_key(options_dict, "bam")
+        options.fastq1    = get_key(options_dict, "fastq1")
+        options.fastq2    = get_key(options_dict, "fastq2")
         options.repeat    = get_key(options_dict, "repeat") 
         options.binaries  = get_key(options_dict, "binaries", dict, default={})
         options.output    = get_key(options_dict, "output")
