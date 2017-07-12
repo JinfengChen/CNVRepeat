@@ -61,9 +61,8 @@ class EstimateGenomeCoverageStep(step.StepChunk):
         options.bed
         commands = []
         commands.append('awk \'$1~/^{}$/ && $2>={} && $3<={}\' {} > {}'.format(chrom, start, end, options.bed, bed))
-        commands.append('{} bedcov {} {} > {}'.format(options.binaries['samtools'], bed, options.bam, bedgraph))
+        commands.append('{} bedcov -Q 30 {} {} > {}'.format(options.binaries['samtools'], bed, options.bam, bedgraph))
         for command in commands:
-            print(command)
             cmd = subprocess.Popen(command, shell=True, stderr=subprocess.PIPE)
             cmd_error = cmd.wait()
             if cmd_error != 0:

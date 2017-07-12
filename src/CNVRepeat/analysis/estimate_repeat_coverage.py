@@ -45,7 +45,7 @@ class EstimateRepeatCoverageStep(step.StepChunk):
                 self.logger.log("bwa index error code: {}\n{}".format(command, cmd_error))
             
         if not os.path.exists(bwa_bam):
-            command = '{} mem -t {} -O2,2 -a -Y -k 15 -T 10 {} {} {} > {}'.format(self.options.binaries['bwa'], self.options.cluster_settings.processes, self.options.repeat, self.options.fastq1, self.options.fastq2, bwa_sam)
+            command = '{} mem -t {} -O2,2 -a -Y -k 15 -T 10 {} {} {} | {} view -Sh -F 4 - > {}'.format(self.options.binaries['bwa'], self.options.cluster_settings.processes, self.options.repeat, self.options.fastq1, self.options.fastq2, self.options.binaries['samtools'], bwa_sam)
             cmd = subprocess.Popen(command, shell=True, stderr=subprocess.PIPE)
             cmd_error = cmd.wait()
             if cmd_error != 0:
