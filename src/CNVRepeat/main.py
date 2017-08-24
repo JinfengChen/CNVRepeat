@@ -34,7 +34,8 @@ def run(options):
 
 def prepare_analysis(options):
     analysis_steps = collections.OrderedDict()
-    if not os.path.exists(options.bed):
+
+    if not os.path.exists(options.bed) or not os.path.splitext(options.bed)[1] == '.bed':
         analysis_steps["Single Copy Exon"]      = analysis.single_copy_exon.SingleCopyExonStep
     analysis_steps["Genome Coverage Estimator"] = analysis.estimate_genome_coverage_bed.EstimateGenomeCoverageStep
     analysis_steps["Genome Coverage Merger"]    = analysis.estimate_genome_coverage_bed.CombineGenomeCoverageStep

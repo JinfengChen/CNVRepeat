@@ -59,7 +59,7 @@ class EstimateRepeatCoverageStep(step.StepChunk):
             if cmd_error != 0:
                 self.logger.log("bam sorting error code: {}\n{}".format(command, cmd_error))
 
-        command = '{} depth -Q 30 {} > {}'.format(self.options.binaries['samtools'], bwa_bam, repeat_depth_out)
+        command = '{} depth -d 80000 -Q 30 {} > {}'.format(self.options.binaries['samtools'], bwa_bam, repeat_depth_out)
         cmd = subprocess.Popen(command, shell=True, stderr=subprocess.PIPE)
         cmd_error = cmd.wait()
         if cmd_error != 0:

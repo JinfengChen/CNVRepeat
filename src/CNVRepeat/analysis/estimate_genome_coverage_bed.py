@@ -7,6 +7,7 @@ import pandas
 from collections import defaultdict
 
 from CNVRepeat import step 
+from CNVRepeat.analysis import single_copy_exon
 
 CHUNKSIZE = 1e7
 
@@ -57,8 +58,14 @@ class EstimateGenomeCoverageStep(step.StepChunk):
 
         self.run_samtools_bedcov(self.options, self.chrom, start, end, outpaths["exonbed"], outpaths["genomebedgraph"])
         
-    def run_samtools_bedcov(self, options, chrom, start, end, bed, bedgraph):
-        options.bed
+    def run_samtools_bedcov(self, options, chrom, start, end, bed, bedgraph): 
+        if not os.path.exists(options.bed):
+            single_exon_bed_out = single_copy_exon.SingleCopyExonStep(options).outpaths(final=True)["bed_out"]
+            if not os.path.exists(single_exon_bed_out):
+                self.logger.log("bed file error: single exon bed file is not found: exiting pipeline \n")
+                sys.exit(1)
+            else:
+                options.bed = single_exon_bed_out  
         commands = []
         commands.append('awk \'$1~/^{}$/ && $2>={} && $3<={}\' {} > {}'.format(chrom, start, end, options.bed, bed))
         commands.append('{} bedcov -Q 30 {} {} > {}'.format(options.binaries['samtools'], bed, options.bam, bedgraph))
