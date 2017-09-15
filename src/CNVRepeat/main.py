@@ -40,6 +40,11 @@ def prepare_analysis(options):
             analysis_steps["Single Copy Exon"]      = analysis.single_copy_exon.SingleCopyExonStep
         analysis_steps["Genome Coverage Estimator"] = analysis.estimate_genome_coverage_bed.EstimateGenomeCoverageStep
         analysis_steps["Genome Coverage Merger"]    = analysis.estimate_genome_coverage_bed.CombineGenomeCoverageStep
+    elif options.method == 'single_copy_exon':
+        if not os.path.exists(options.bed) or not os.path.splitext(options.bed)[1] == '.bed':
+            analysis_steps["Random Region"]      = analysis.single_copy_exon.RandomRegionStep
+        analysis_steps["Genome Coverage Estimator"] = analysis.estimate_genome_coverage_bed.EstimateGenomeCoverageStep
+        analysis_steps["Genome Coverage Merger"]    = analysis.estimate_genome_coverage_bed.CombineGenomeCoverageStep
     elif options.method == 'goleft':
         analysis_steps["Genome Coverage Estimator Goleft"] = analysis.estimate_genome_coverage_bed.EstimateGenomeCoverageGoleftStep
     analysis_steps["Repaet Coverage Estimator"] = analysis.estimate_repeat_coverage.EstimateRepeatCoverageStep
@@ -53,7 +58,9 @@ def main():
     parser.add_argument("--local", action="store_true", help="run job locally in multiprocess mode")
     parser.add_argument("--scheduler", help="run job using scheduler, SLURM, SGE, PBS/Torque")
     parser.add_argument("--cpu", default=1, help="number of cpu")
-    parser.add_argument("--method", default='goleft', help="method for estimation of genome coverage: goleft, single_copy_exon")
+    parser.add_argument("--method", default='goleft', help="method for estimation of genome coverage: goleft, single_copy_exon, random_region")
+    parser.add_argument("--random_dna_length", default=1000, help="length of DNA for random selection of method random_region")
+    parser.add_argument("--random_dna_number", default=100000, help="number of DNA for random selection of method random_region")
     parser.add_argument("--debug", action="store_true", help="run in debug mode")
     args = parser.parse_args()
      
@@ -64,6 +71,8 @@ def main():
     options = load_config(args.config)
     options.debug  = args.debug
     options.method = args.method
+    options.random_dna_length = args.random_dna_length
+    options.random_dna_number = args.random_dna_number
 
     log.log_command(options, sys.argv)
 

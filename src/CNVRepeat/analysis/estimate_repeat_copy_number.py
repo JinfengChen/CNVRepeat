@@ -44,9 +44,9 @@ class EstimateRepeatCopyNumberStep(step.StepChunk):
             self.logger.log("no black list found")
             pass
 
-        if self.options.method == 'single_copy_exon':
-            single_copy_exon_bedgraph = estimate_genome_coverage_bed.CombineGenomeCoverageStep(self.options).outpaths(final=True)["genomecov"]
-            self.run_estimate_repeat_copy_number(single_copy_exon_bedgraph, repeat_depth, self.options.repeat, self.repeat_cnv, black_list)
+        if self.options.method == 'single_copy_exon' or self.options.method == 'random_region':
+            region_bedgraph = estimate_genome_coverage_bed.CombineGenomeCoverageStep(self.options).outpaths(final=True)["genomecov"]
+            self.run_estimate_repeat_copy_number(region_bedgraph, repeat_depth, self.options.repeat, self.repeat_cnv, black_list, self.options.method)
         elif self.options.method == 'goleft':
             goleft_covstats = estimate_genome_coverage_bed.EstimateGenomeCoverageGoleftStep(self.options).outpaths(final=True)["genomecov"]      
             self.run_estimate_repeat_copy_number_goleft(goleft_covstats, repeat_depth, self.options.repeat, self.repeat_cnv, black_list) 
@@ -67,15 +67,22 @@ class EstimateRepeatCopyNumberStep(step.StepChunk):
         genomecov_mean = data_bedgraph["coverage"][0]
         return float(genomecov_mean)
 
-    def run_estimate_repeat_copy_number(self, single_copy_exon_bedgraph, repeat_depth, repeat, repeat_cnv, black_list):
+    def run_estimate_repeat_copy_number(self, region_bedgraph, repeat_depth, repeat, repeat_cnv, black_list, method):
         repeat_seq = Reference(repeat)
-        single_copy_exon_cov = self.parse_bedgraph(single_copy_exon_bedgraph)
+        region_cov = self.parse_bedgraph(region_bedgraph)
         repeat_cov           = self.parse_depth(repeat_depth, repeat_seq, black_list)
+ 
+        method_title = '' 
+        if method == 'single_copy_exon':
+            method_title = 'Single_Copy_Exon_Genome_Coverage'
+        elif method == 'random_region':
+            method_title = 'Random_Region_Genome_Coverage'
+
         ofile = open(repeat_cnv, 'w')
-        print >> ofile, 'Repeat\tRepeat_Coverage\tSingle_Copy_Exon_Genome_Coverage\tRepeat_Copy_Number'
+        print >> ofile, 'Repeat\tRepeat_Coverage\t{}\tRepeat_Copy_Number'.format(method_title)
         for repeat in sorted(repeat_cov.keys()):
-            '''print >> ofile, '\t'.join(map(str, [repeat, repeat_cov[repeat], single_copy_exon_cov, repeat_cov[repeat]/single_copy_exon_cov]))'''
-            print >> ofile, '{}\t{:.2f}\t{:.2f}\t{:.2f}'.format(repeat, repeat_cov[repeat], single_copy_exon_cov, repeat_cov[repeat]/single_copy_exon_cov)
+            '''print >> ofile, '\t'.join(map(str, [repeat, repeat_cov[repeat], region_cov, repeat_cov[repeat]/region_cov]))'''
+            print >> ofile, '{}\t{:.2f}\t{:.2f}\t{:.2f}'.format(repeat, repeat_cov[repeat], region_cov, repeat_cov[repeat]/region_cov)
         ofile.close()
 
     '''

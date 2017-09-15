@@ -96,12 +96,21 @@ class EstimateGenomeCoverageStep(step.StepChunk):
         
     def run_samtools_bedcov(self, options, chrom, start, end, bed, bedgraph): 
         if not os.path.exists(options.bed):
-            single_exon_bed_out = single_copy_exon.SingleCopyExonStep(options).outpaths(final=True)["bed_out"]
-            if not os.path.exists(single_exon_bed_out):
-                self.logger.log("bed file error: single exon bed file is not found: exiting pipeline \n")
-                sys.exit(1)
-            else:
-                options.bed = single_exon_bed_out  
+            if self.options.method == 'single_copy_exon':
+                single_exon_bed_out = single_copy_exon.SingleCopyExonStep(options).outpaths(final=True)["bed_out"]
+                if not os.path.exists(single_exon_bed_out):
+                    self.logger.log("bed file error: single exon bed file is not found: exiting pipeline \n")
+                    sys.exit(1)
+                else:
+                    options.bed = single_exon_bed_out  
+            elif self.options.method == 'random_region':
+                random_region_bed_out = single_copy_exon.RandomRegionStep(options).outpaths(final=True)["bed_out"]
+                if not os.path.exists(random_region_bed_out):
+                    self.logger.log("bed file error: random region bed file is not found: exiting pipeline \n") 
+                    sys.exit(1)
+                else:
+                    options.bed = random_region_bed_out          
+
         commands = []
         commands.append('awk \'$1~/^{}$/ && $2>={} && $3<={}\' {} > {}'.format(chrom, start, end, options.bed, bed))
         commands.append('{} bedcov {} {} > {}'.format(options.binaries['samtools'], bed, options.bam, bedgraph))

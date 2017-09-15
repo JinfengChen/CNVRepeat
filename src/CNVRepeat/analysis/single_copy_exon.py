@@ -6,6 +6,45 @@ from collections import defaultdict
 
 from CNVRepeat import step 
 
+class RandomRegionStep(step.StepChunk):
+   
+    @staticmethod
+    def get_steps(options):
+        yield RandomRegionStep(options)
+
+    def __init__(self, options):
+        self.options = options
+
+    def __str__(self):
+        return ".".join([self.__class__.__name__])  
+ 
+    def outpaths(self, final):
+        directory = self.results_dir if final \
+                    else self.working_dir
+        paths = {
+            "bed_out" : os.path.join(directory, '{}.random_region_l{}_n{}.bed'.format(os.path.splitext(os.path.split(self.options.ref_fasta)[1])[0]), self.options.random_dna_length, self.options.random_dna_number)
+        }
+
+        return paths
+
+    def run(self):
+        self.bed_out = self.outpaths(final=False)["bed_out"]
+        if not os.path.exists(self.bed_out):
+            self.run_random_region(self.options.ref_fasta, self.bed_out)
+
+    def run_random_region(self, bed_out)
+        commands = []
+        fai = '{}.fai'.format(self.options.ref_fasta)
+        if not os.path.exists(fai):
+            commands.append('{} faidx {}'.format(self.options.binaries['samtools'], self.options.ref_fasta))
+        commands.append('{} random -l {} -n {} -seed 123 -g {} | cut -f1,2,3,6 > {}'.format(self.options.binaries['bedtools'], self.options.random_dna_length, self.options.random_dna_number, fai, bed_out))
+        
+        for command in commands:
+            cmd = subprocess.Popen(command, shell=True, stderr=subprocess.PIPE)
+            cmd_error = cmd.wait()
+            if cmd_error != 0:
+                self.logger.log("random region genome coverage error code: {}\n{}".format(command, cmd_error))
+
 class SingleCopyExonStep(step.StepChunk):
    
     @staticmethod

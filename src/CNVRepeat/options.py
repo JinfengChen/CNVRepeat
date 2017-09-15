@@ -56,6 +56,8 @@ class Options(object):
 
         self.debug  = debug
         self.method = None 
+        self.random_dna_length = None
+        self.random_dna_number = None
 
     def serialize(self, ):
 
