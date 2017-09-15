@@ -14,6 +14,42 @@ CHUNKSIZE = 1e7
 def chunks_for_chrom(options, chrom):
     return int(np.ceil(options.reference.chrom_lengths[chrom]/CHUNKSIZE))
 
+class EstimateGenomeCoverageGoleftStep(step.StepChunk):
+    @staticmethod
+    def get_steps(options):
+        yield EstimateGenomeCoverageGoleftStep(options)
+
+    def __init__(self, options):
+        self.options = options
+
+    def __init__(self, options):
+        self.options = options
+
+    def __str__(self):
+        return ".".join([self.__class__.__name__])
+
+    def outpaths(self, final):
+        directory = self.results_dir if final \
+                    else self.working_dir
+
+        genomecov_name = "genomecov.goleft.covstats"
+
+        paths = {
+            "genomecov": os.path.join(directory, genomecov_name)
+        }
+
+        return paths
+    
+
+    def run(self):
+        outpaths = self.outpaths(final=False)
+        self.logger.log("Calculating genome coverage using goleft-covstats ...")
+        command  = '{} covstats {} > {}'.format(self.options.binaries['goleft'], self.options.bam, outpaths['genomecov'])
+        cmd = subprocess.Popen(command, shell=True, stderr=subprocess.PIPE) 
+        cmd_error = cmd.wait()
+        if cmd_error != 0:
+            self.logger.log("goleft genome coverage error code: {}\n{}".format(command, cmd_error)) 
+
 class EstimateGenomeCoverageStep(step.StepChunk):
     @staticmethod
     def get_steps(options):
@@ -68,7 +104,7 @@ class EstimateGenomeCoverageStep(step.StepChunk):
                 options.bed = single_exon_bed_out  
         commands = []
         commands.append('awk \'$1~/^{}$/ && $2>={} && $3<={}\' {} > {}'.format(chrom, start, end, options.bed, bed))
-        commands.append('{} bedcov -Q 30 {} {} > {}'.format(options.binaries['samtools'], bed, options.bam, bedgraph))
+        commands.append('{} bedcov {} {} > {}'.format(options.binaries['samtools'], bed, options.bam, bedgraph))
         for command in commands:
             cmd = subprocess.Popen(command, shell=True, stderr=subprocess.PIPE)
             cmd_error = cmd.wait()

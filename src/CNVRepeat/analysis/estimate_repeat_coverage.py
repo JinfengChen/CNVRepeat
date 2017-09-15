@@ -59,7 +59,7 @@ class EstimateRepeatCoverageStep(step.StepChunk):
             if cmd_error != 0:
                 self.logger.log("bam sorting error code: {}\n{}".format(command, cmd_error))
 
-        command = '{} depth -d 80000 -Q 30 {} > {}'.format(self.options.binaries['samtools'], bwa_bam, repeat_depth_out)
+        command = '{} depth -d 80000 -Q 20 {} > {}'.format(self.options.binaries['samtools'], bwa_bam, repeat_depth_out)
         cmd = subprocess.Popen(command, shell=True, stderr=subprocess.PIPE)
         cmd_error = cmd.wait()
         if cmd_error != 0:
@@ -71,6 +71,8 @@ class EstimateRepeatCoverageStep(step.StepChunk):
         right_clip  = re.compile(r'^(\d+)M\d+S$')
         left_clip   = re.compile(r'^\d+S\d+M$')
         perfect     = re.compile(r'^\d+M$')
+        mm          = re.compile(r'NM:i:(\d+)')
+        xs          = re.compile(r'XS:i:(\d+)')
         with open (sam, 'r') as filehd:
             for line in filehd:
                 line = line.rstrip()
@@ -78,6 +80,12 @@ class EstimateRepeatCoverageStep(step.StepChunk):
                     print >> ofile, line
                 else:
                     unit = re.split(r'\t',line)
+                    mm_m = mm.search(line)
+                    mm_n = mm_m.groups(0)[0] if mm_m else 0
+                    xs_m = xs.search(line)
+                    xs_n = xs_m.groups(0)[0] if xs_m else 100
+                    if int(mm_n) > 2:
+                        continue
                     if perfect.search(unit[5]):
                         print >> ofile, line
                     elif left_clip.search(unit[5]) and int(unit[3]) < 10:

@@ -46,6 +46,7 @@ class Options(object):
         self.fastq1    = None
         self.fastq2    = None
         self.repeat    = None
+        self.black     = None
         self.binaries  = {}
         self._reference = None
         self._constants = None
@@ -53,8 +54,8 @@ class Options(object):
 
         self.cluster_settings = ClusterSettings()
 
-        self.debug = debug
-
+        self.debug  = debug
+        self.method = None 
 
     def serialize(self, ):
 
@@ -65,6 +66,7 @@ class Options(object):
              "fastq1": self.fastq1,
              "fastq2": self.fastq2,
              "repeat": self.repeat,
+             "black": self.black,
              "output": self.output,
              "cluster_settings": self.cluster_settings.serialize(),
              "binaries": self.binaries
@@ -81,7 +83,8 @@ class Options(object):
         options.bam       = get_key(options_dict, "bam")
         options.fastq1    = get_key(options_dict, "fastq1")
         options.fastq2    = get_key(options_dict, "fastq2")
-        options.repeat    = get_key(options_dict, "repeat") 
+        options.repeat    = get_key(options_dict, "repeat")
+        options.black     = get_key(options_dict, "black") 
         options.binaries  = get_key(options_dict, "binaries", dict, default={})
         options.output    = get_key(options_dict, "output")
 

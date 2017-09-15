@@ -34,11 +34,14 @@ def run(options):
 
 def prepare_analysis(options):
     analysis_steps = collections.OrderedDict()
-
-    if not os.path.exists(options.bed) or not os.path.splitext(options.bed)[1] == '.bed':
-        analysis_steps["Single Copy Exon"]      = analysis.single_copy_exon.SingleCopyExonStep
-    analysis_steps["Genome Coverage Estimator"] = analysis.estimate_genome_coverage_bed.EstimateGenomeCoverageStep
-    analysis_steps["Genome Coverage Merger"]    = analysis.estimate_genome_coverage_bed.CombineGenomeCoverageStep
+   
+    if options.method == 'single_copy_exon':
+        if not os.path.exists(options.bed) or not os.path.splitext(options.bed)[1] == '.bed':
+            analysis_steps["Single Copy Exon"]      = analysis.single_copy_exon.SingleCopyExonStep
+        analysis_steps["Genome Coverage Estimator"] = analysis.estimate_genome_coverage_bed.EstimateGenomeCoverageStep
+        analysis_steps["Genome Coverage Merger"]    = analysis.estimate_genome_coverage_bed.CombineGenomeCoverageStep
+    elif options.method == 'goleft':
+        analysis_steps["Genome Coverage Estimator Goleft"] = analysis.estimate_genome_coverage_bed.EstimateGenomeCoverageGoleftStep
     analysis_steps["Repaet Coverage Estimator"] = analysis.estimate_repeat_coverage.EstimateRepeatCoverageStep
     analysis_steps["Repeat Copy Number"]        = analysis.estimate_repeat_copy_number.EstimateRepeatCopyNumberStep
 
@@ -50,6 +53,7 @@ def main():
     parser.add_argument("--local", action="store_true", help="run job locally in multiprocess mode")
     parser.add_argument("--scheduler", help="run job using scheduler, SLURM, SGE, PBS/Torque")
     parser.add_argument("--cpu", default=1, help="number of cpu")
+    parser.add_argument("--method", default='goleft', help="method for estimation of genome coverage: goleft, single_copy_exon")
     parser.add_argument("--debug", action="store_true", help="run in debug mode")
     args = parser.parse_args()
      
@@ -58,7 +62,8 @@ def main():
         sys.exit(1)
 
     options = load_config(args.config)
-    options.debug = args.debug
+    options.debug  = args.debug
+    options.method = args.method
 
     log.log_command(options, sys.argv)
 
